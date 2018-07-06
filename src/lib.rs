@@ -7,7 +7,7 @@ use na::Vector2;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-pub enum CoordinateStyle {
+pub enum CoordinateOrigin {
     /// zero at the center, positive towards top-right
     Center,
 
@@ -50,10 +50,9 @@ pub enum CoordinateDominance {
     MinNormalized,
 }
 
-
 pub struct CoordinateSystem {
     pub scale: CoordinateScale,
-    pub style: CoordinateStyle,
+    pub origin: CoordinateOrigin,
     pub input_dominance: CoordinateDominance,
     pub output_dominance: CoordinateDominance,
 }
@@ -63,13 +62,16 @@ impl CoordinateSystem {
         &self,
         size: &(f64, f64),
     ) -> Matrix2<f64> {
+        use CoordinateDominance::*;
+        use CoordinateScale::*;
+
         // okay, don't worry about the manual mathematics of these. hopefully,
         // the compiler would be smart enough to optimize this whole function.
         
         // set everything to square
         let transform_to_square = match self.scale {
             Square => Matrix2::identity(),
-            Scale => match (self.input_dominance, size.0, size.1) {
+            Scale => match (&self.input_dominance, size.0, size.1) {
                 (WidthNormalized, x, y) => Matrix2::new(1., 0.,
                                                         0., y / x),
                 (MaxNormalized, x, y) if x > y => Matrix2::new(1., 0.,
@@ -83,80 +85,80 @@ impl CoordinateSystem {
             }
         };
 
-        fn flip_y(style: &CoordinateStyle) -> bool {
-            use CoordinateStyle::*;
+        fn flip_y(origin: &CoordinateOrigin) -> bool {
+            use CoordinateOrigin::*;
 
-            match style {
+            match origin {
                 TopLeft | TopRight => true,
                 _ => false,
             }
         }
 
-        fn flip_x(style: &CoordinateStyle) -> bool {
-            use CoordinateStyle::*;
+        fn flip_x(origin: &CoordinateOrigin) -> bool {
+            use CoordinateOrigin::*;
 
-            match style {
+            match origin {
                 TopRight | BottomRight => true,
                 _ => false,
             }
         };
 
-        fn scale_half(style: &CoordinateStyle) -> bool {
-            use CoordinateStyle::*;
+        fn scale_half(origin: &CoordinateOrigin) -> bool {
+            use CoordinateOrigin::*;
 
-            match style {
+            match origin {
                 Center => false,
                 _ => true,
             }
         }
 
-        fn x_offset(style: &CoordinateStyle) -> Option<bool> {
-            use CoordinateStyle::*;
+        fn x_offset(origin: &CoordinateOrigin) -> Option<bool> {
+            use CoordinateOrigin::*;
 
-            match style {
+            match origin {
                 TopLeft | BottomLeft => Some(true),
-                BottomLeft | BottomRight => Some(false),
+                TopRight | BottomRight => Some(false),
                 Center => None,
             }
         }
 
-        fn y_offset(style: &CoordinateStyle) -> Option<bool> {
-            use CoordinateStyle::*;
+        fn y_offset(origin: &CoordinateOrigin) -> Option<bool> {
+            use CoordinateOrigin::*;
 
-            match style {
+            match origin {
                 TopLeft | TopRight => Some(false),
                 BottomLeft | BottomRight => Some(true),
                 Center => None,
             }
         }
 
-        fn transform_to_center(style: &CoordinateStyle) -> Matrix2<f64>
+        fn transform_to_center(origin: &CoordinateOrigin) -> Matrix2<f64>
         {
             let mut indom_to_center = Matrix2::identity();
 
-            if flip_y(style) {
+            if flip_y(origin) {
                 indom_to_center *= Matrix2::new(1., 0.,
                                                 0., -1.);
             }
 
-            if flip_x(style) {
+            if flip_x(origin) {
                 indom_to_center *= Matrix2::new(-1., 0.,
                                                 0., 1.);
             }
 
-            if scale_half(style) {
+            if scale_half(origin) {
                 indom_to_center *= Matrix2::new(0.5, 0.,
                                                 0., 0.5);
             }
 
-            if let Some(x_offset) = x_offset(style) {
+            if let Some(x_offset) = x_offset(origin) {
                 let x_offset = if x_offset { 1. } else { -1. };
 
                 indom_to_center *= Matrix2::new(x_offset, 0.,
                                                 0., 0.);
             }
 
-            if let Some(y_offset) = y_offset(style) {
+            if let Some(y_offset) = y_offset(origin) {
                 let y_offset = if y_offset { 1. } else { -1. };
 
                 indom_to_center *= Matrix2::new(0., 0.,
@@ -166,10 +168,10 @@ impl CoordinateSystem {
             indom_to_center
         };
 
-        let center_to_transform = transform_to_center(&self.style)
+        let center_to_transform = transform_to_center(&self.origin)
             .try_inverse()
             .unwrap();
-        let transform_to_center = transform_to_center(&self.style);
+        let transform_to_center = transform_to_center(&self.origin);
 
         transform_to_square * transform_to_center * center_to_transform
 
