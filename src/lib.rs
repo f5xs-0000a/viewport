@@ -52,9 +52,9 @@ pub enum CoordinateDominance {
 
 pub struct CoordinateSystem {
     pub scale: CoordinateScale,
-    pub origin: CoordinateOrigin,
-    pub input_dominance: CoordinateDominance,
-    pub output_dominance: CoordinateDominance,
+    pub dominance: CoordinateDominance,
+    pub input_origin: CoordinateOrigin,
+    pub output_origin: CoordinateOrigin,
 }
 
 impl CoordinateSystem {
@@ -71,7 +71,7 @@ impl CoordinateSystem {
         // set everything to square
         let transform_to_square = match self.scale {
             Square => Matrix2::identity(),
-            Scale => match (&self.input_dominance, size.0, size.1) {
+            Scale => match (&self.dominance, size.0, size.1) {
                 (WidthNormalized, x, y) => Matrix2::new(1., 0.,
                                                         0., y / x),
                 (MaxNormalized, x, y) if x > y => Matrix2::new(1., 0.,
@@ -168,10 +168,10 @@ impl CoordinateSystem {
             indom_to_center
         };
 
-        let center_to_transform = transform_to_center(&self.origin)
+        let center_to_transform = transform_to_center(&self.output_origin)
             .try_inverse()
             .unwrap();
-        let transform_to_center = transform_to_center(&self.origin);
+        let transform_to_center = transform_to_center(&self.input_origin);
 
         transform_to_square * transform_to_center * center_to_transform
 
