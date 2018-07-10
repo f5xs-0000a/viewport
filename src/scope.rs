@@ -10,6 +10,7 @@ pub enum Scope {
 }
 
 use self::Scope::*;
+use Direction::*;
 
 impl Scope {
     pub fn is_whole(&self) -> bool {
@@ -40,11 +41,12 @@ impl Scope {
 
     pub fn effective_unit_offset_matrix(&self, size: &(f64, f64))
     -> Matrix3<f64> {
-        let width_limited = size.0 / ar_x < size.1 / ar_y;
+        //let width_limited = size.0 / ar_x < size.1 / ar_y;
 
         match self {
             AspectRatio(_, _, Center) | Whole => Matrix3::identity(),
 
+            /*
             AspectRatio(input_ar_width, input_ar_height, direction) => {
                 let input_ar_width = input_ar_width / input_ar_height;
                 let input_ar_height = 1.;
@@ -54,10 +56,13 @@ impl Scope {
 
                 
             },
+            */
+
+            _ => unimplemented!(),
         }
     }
 
     pub fn alignment_matrix(&self) -> Matrix3<f64> {
-
+        unimplemented!()
     }
 }

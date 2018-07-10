@@ -49,42 +49,40 @@ impl Origin {
     }
 
     pub fn from_center_matrix(&self) -> Matrix3<f64> {
-        match self {
-            let mut affine = Matrix3::identity();
+        let mut affine = Matrix3::identity();
 
-            if self.will_flip_x() {
-                affine = Matrix3::new(-1., 0., 0.,
-                                      0., 1., 0.,
-                                      0., 0., 1.)
-                    * affine;
-            }
-
-            if self.will_flip_y() {
-                affine = Matrix3::new(1., 0., 0.,
-                                      0., -1., 0.,
-                                      0., 0., 1.);
-            }
-
-            if !self.is_center() {
-                // xy offset
-                affine = Matrix3::new(1., 0., 1.,
-                                      0., 1., 1.,
-                                      0., 0., 1.)
-                    * affine;
-                
-                // scale half
-                affine = Matrix3::new(0.5, 0., 0.,
-                                      0., 0.5, 0.,
-                                      0., 0., 1.)
-                    * affine
-            }
-
-            affine
+        if self.will_flip_x() {
+            affine = Matrix3::new(-1., 0., 0.,
+                                  0., 1., 0.,
+                                  0., 0., 1.)
+                * affine;
         }
+
+        if self.will_flip_y() {
+            affine = Matrix3::new(1., 0., 0.,
+                                  0., -1., 0.,
+                                  0., 0., 1.);
+        }
+
+        if !self.is_center() {
+            // xy offset
+            affine = Matrix3::new(1., 0., 1.,
+                                  0., 1., 1.,
+                                  0., 0., 1.)
+                * affine;
+            
+            // scale half
+            affine = Matrix3::new(0.5, 0., 0.,
+                                  0., 0.5, 0.,
+                                  0., 0., 1.)
+                * affine
+        }
+
+        affine
     }
 
     pub fn to_center_matrix(&self) -> Matrix3<f64> {
-        self.from_center_matrix
+        self.from_center_matrix()
             .try_inverse()
             .unwrap()
     }

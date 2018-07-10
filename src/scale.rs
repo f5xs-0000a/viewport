@@ -1,3 +1,5 @@
+use na::Matrix3;
+
 use unit_length::UnitLength;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -28,15 +30,15 @@ impl Scale {
     ) -> Matrix3<f64> {
         use UnitLength::*;
 
-        let unit_length = match &self.scale {
-            Scale => return Matrix3::new(width, 0., 0.,
-                                         0., height, 0.,
+        let unit_length = match self {
+            Scale => return Matrix3::new(target_dimensions.0, 0., 0.,
+                                         0., target_dimensions.1, 0.,
                                          0., 0., 1.),
 
-            Square(Width) => target_width,
-            Square(Height) => target_height,
-            Square(MaxSide) => target_width.max(target_height),
-            Square(MinSide) => target_width.min(target_height),
+            Square(Width) => target_dimensions.0,
+            Square(Height) => target_dimensions.1,
+            Square(MaxSide) => target_dimensions.0.max(target_dimensions.1),
+            Square(MinSide) => target_dimensions.0.min(target_dimensions.1),
         };
 
         Matrix3::new(unit_length, 0., 0.,
